@@ -26,7 +26,6 @@
 
       <div class="header-actions">
         <button id="todayBtn" class="ghost-btn" type="button">Today</button>
-        <button id="themeToggle" class="ghost-btn" type="button">Theme</button>
         <button id="exportBtn" class="ghost-btn" type="button">Export</button>
         <label class="ghost-btn import-label" for="importFile">Import</label>
         <input id="importFile" type="file" accept="application/json" hidden />
@@ -64,8 +63,8 @@
             <strong id="todayNutritionCount">0</strong>
           </div>
           <div class="strip-item">
-            <span class="strip-label">Sleep entries</span>
-            <strong id="todaySleepCount">0</strong>
+            <span class="strip-label">Journal entries</span>
+            <strong id="todayJournalCount">0</strong>
           </div>
           <div class="strip-item">
             <span class="strip-label">Libido avg</span>
@@ -91,12 +90,13 @@
               <option value="exercise">Exercise</option>
               <option value="nutrition">Nutrition</option>
               <option value="sex">Sex</option>
+              <option value="journal">Journal</option>
             </select>
           </div>
 
           <div class="field">
             <label for="filterDate">Date</label>
-            <input id="filterDate" type="text" placeholder="YYYY-MM-DD" inputmode="numeric" />
+            <input id="filterDate" type="date" />
           </div>
 
           <div class="field field-wide">
@@ -104,7 +104,7 @@
             <input
               id="filterText"
               type="text"
-              placeholder="Search notes, dreams, meal titles..."
+              placeholder="Search notes, dreams, journal text, meal titles..."
             />
           </div>
 
@@ -121,6 +121,7 @@
         <button class="tab-btn" data-tab="exercise" type="button">Exercise</button>
         <button class="tab-btn" data-tab="nutrition" type="button">Nutrition</button>
         <button class="tab-btn" data-tab="sex" type="button">Sex</button>
+        <button class="tab-btn" data-tab="journal" type="button">Journal</button>
       </nav>
 
       <section id="sleepTab" class="tab-panel active">
@@ -141,15 +142,15 @@
               <div class="form-grid">
                 <div class="field">
                   <label for="sleepDate">Date</label>
-                  <input id="sleepDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required />
+                  <input id="sleepDate" type="date" required />
                 </div>
                 <div class="field">
                   <label for="sleepBedtime">Bedtime</label>
-                  <input id="sleepBedtime" type="text" inputmode="numeric" placeholder="HH:MM" required />
+                  <input id="sleepBedtime" type="time" required />
                 </div>
                 <div class="field">
                   <label for="sleepWakeTime">Wake time</label>
-                  <input id="sleepWakeTime" type="text" inputmode="numeric" placeholder="HH:MM" required />
+                  <input id="sleepWakeTime" type="time" required />
                 </div>
                 <div class="field">
                   <label for="sleepHours">Estimated total sleep hours</label>
@@ -213,11 +214,11 @@
               <div class="form-grid">
                 <div class="field">
                   <label for="exerciseDate">Date</label>
-                  <input id="exerciseDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required />
+                  <input id="exerciseDate" type="date" required />
                 </div>
                 <div class="field">
                   <label for="exerciseTime">Time</label>
-                  <input id="exerciseTime" type="text" inputmode="numeric" placeholder="HH:MM" required />
+                  <input id="exerciseTime" type="time" required />
                 </div>
                 <div class="field">
                   <label for="exerciseType">Exercise type</label>
@@ -302,11 +303,11 @@
               <div class="form-grid">
                 <div class="field">
                   <label for="nutritionDate">Date</label>
-                  <input id="nutritionDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required />
+                  <input id="nutritionDate" type="date" required />
                 </div>
                 <div class="field">
                   <label for="nutritionTime">Time</label>
-                  <input id="nutritionTime" type="text" inputmode="numeric" placeholder="HH:MM" required />
+                  <input id="nutritionTime" type="time" required />
                 </div>
                 <div class="field">
                   <label for="nutritionTitle">Meal / intake title</label>
@@ -375,11 +376,11 @@
               <div class="form-grid">
                 <div class="field">
                   <label for="sexDate">Date</label>
-                  <input id="sexDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required />
+                  <input id="sexDate" type="date" required />
                 </div>
                 <div class="field">
                   <label for="sexTime">Time</label>
-                  <input id="sexTime" type="text" inputmode="numeric" placeholder="HH:MM" required />
+                  <input id="sexTime" type="time" required />
                 </div>
                 <div class="field">
                   <label for="sexLibido">Libido level (1–5)</label>
@@ -446,6 +447,61 @@
               </div>
             </div>
             <div id="sexHistory" class="history-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="journalTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Module 5</p>
+                <h2>Journal</h2>
+              </div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="journal">
+                Today
+              </button>
+            </div>
+
+            <form id="journalForm">
+              <input type="hidden" id="journalId" />
+              <div class="form-grid">
+                <div class="field">
+                  <label for="journalDate">Date</label>
+                  <input id="journalDate" type="date" required />
+                </div>
+                <div class="field">
+                  <label for="journalTime">Time</label>
+                  <input id="journalTime" type="time" required />
+                </div>
+                <div class="field field-full">
+                  <label for="journalText">Journal text</label>
+                  <textarea
+                    id="journalText"
+                    rows="10"
+                    class="journal-textarea"
+                    placeholder="Write freely..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Journal Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="journal">Clear</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="card history-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">History</p>
+                <h2>Past journal entries</h2>
+              </div>
+            </div>
+            <div id="journalHistory" class="history-list"></div>
           </article>
         </div>
       </section>

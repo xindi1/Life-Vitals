@@ -1,21 +1,20 @@
-const STORAGE_KEY = "lifeVitalsData_v2";
-const LEGACY_STORAGE_KEY = "lifeVitalsData_v1";
-const DRAFTS_KEY = "lifeVitalsDrafts_v2";
-const LEGACY_DRAFTS_KEY = "lifeVitalsDrafts_v1";
-const THEME_KEY = "lifeVitalsTheme";
+const STORAGE_KEY = "lifeVitalsData_v1";
+const DRAFTS_KEY = "lifeVitalsDrafts_v1";
 
 const MODULES = {
   sleep: { label: "Sleep" },
   exercise: { label: "Exercise" },
   nutrition: { label: "Nutrition" },
-  sex: { label: "Sex" }
+  sex: { label: "Sex" },
+  journal: { label: "Journal" }
 };
 
 const defaultData = {
   sleep: [],
   exercise: [],
   nutrition: [],
-  sex: []
+  sex: [],
+  journal: []
 };
 
 const state = {
@@ -32,7 +31,6 @@ const state = {
 let deferredPrompt = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadTheme();
   setCurrentDate();
   seedDefaultDates();
   bindTabs();
@@ -40,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindGlobalActions();
   bindFilters();
   bindQuickFill();
-  bindTimeFormatting();
   renderAll();
   restoreDrafts();
   registerServiceWorker();
@@ -49,10 +46,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return structuredClone(defaultData);
     const parsed = JSON.parse(raw);
-    return sanitizeImportedData(parsed);
+    return {
+      sleep: Array.isArray(parsed.sleep) ? parsed.sleep : [],
+      exercise: Array.isArray(parsed.exercise) ? parsed.exercise : [],
+      nutrition: Array.isArray(parsed.nutrition) ? parsed.nutrition : [],
+      sex: Array.isArray(parsed.sex) ? parsed.sex : [],
+      journal: Array.isArray(parsed.journal) ? parsed.journal : []
+    };
   } catch (error) {
     console.error("Failed to load data:", error);
     return structuredClone(defaultData);
@@ -61,28 +64,12 @@ function loadData() {
 
 function loadDrafts() {
   try {
-    const raw = localStorage.getItem(DRAFTS_KEY) || localStorage.getItem(LEGACY_DRAFTS_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return {
-      sleep: parsed.sleep || {},
-      exercise: parsed.exercise || {},
-      nutrition: parsed.nutrition || {},
-      sex: parsed.sex || {}
-    };
+    const raw = localStorage.getItem(DRAFTS_KEY);
+    return raw ? JSON.parse(raw) : {};
   } catch (error) {
     console.error("Failed to load drafts:", error);
     return {};
   }
-}
-
-function sanitizeImportedData(imported) {
-  return {
-    sleep: Array.isArray(imported.sleep) ? imported.sleep : [],
-    exercise: Array.isArray(imported.exercise) ? imported.exercise : [],
-    nutrition: Array.isArray(imported.nutrition) ? imported.nutrition : [],
-    sex: Array.isArray(imported.sex) ? imported.sex : []
-  };
 }
 
 function saveData() {
@@ -91,23 +78,6 @@ function saveData() {
 
 function saveDrafts() {
   localStorage.setItem(DRAFTS_KEY, JSON.stringify(state.drafts));
-}
-
-function loadTheme() {
-  const saved = localStorage.getItem(THEME_KEY) || "dark";
-  document.body.classList.toggle("light", saved === "light");
-}
-
-function toggleTheme() {
-  const isLight = document.body.classList.toggle("light");
-  localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
-  updateThemeMeta();
-}
-
-function updateThemeMeta() {
-  const themeMeta = document.querySelector('meta[name="theme-color"]');
-  if (!themeMeta) return;
-  themeMeta.setAttribute("content", document.body.classList.contains("light") ? "#eef4fb" : "#0f1720");
 }
 
 function setCurrentDate() {
@@ -119,7 +89,6 @@ function setCurrentDate() {
     month: "long",
     day: "numeric"
   }).format(now);
-  updateThemeMeta();
 }
 
 function todayString() {
@@ -130,52 +99,6 @@ function todayString() {
 function currentTime24() {
   const now = new Date();
   return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-}
-
-
-function formatTimeInput(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-
-  if (digits.length === 0) return "";
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-}
-
-function normalizeTime(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-
-  if (digits.length === 0) return "";
-  if (digits.length < 4) return formatTimeInput(digits);
-
-  let hours = parseInt(digits.slice(0, 2), 10);
-  let minutes = parseInt(digits.slice(2, 4), 10);
-
-  if (Number.isNaN(hours)) hours = 0;
-  if (Number.isNaN(minutes)) minutes = 0;
-
-  hours = Math.max(0, Math.min(23, hours));
-  minutes = Math.max(0, Math.min(59, minutes));
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-function isValidTime(value) {
-  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
-}
-
-function bindTimeFormatting() {
-  ["sleepBedtime", "sleepWakeTime", "exerciseTime", "nutritionTime", "sexTime"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    el.addEventListener("input", () => {
-      el.value = formatTimeInput(el.value);
-    });
-
-    el.addEventListener("blur", () => {
-      el.value = normalizeTime(el.value);
-    });
-  });
 }
 
 function pad(value) {
@@ -190,12 +113,23 @@ function seedDefaultDates() {
   const today = todayString();
   const time = currentTime24();
 
-  ["sleepDate", "exerciseDate", "nutritionDate", "sexDate", "filterDate"].forEach((id) => {
+  [
+    "sleepDate",
+    "exerciseDate",
+    "nutritionDate",
+    "sexDate",
+    "journalDate"
+  ].forEach((id) => {
     const el = document.getElementById(id);
-    if (el && !el.value) el.value = id === "filterDate" ? "" : today;
+    if (el && !el.value) el.value = today;
   });
 
-  ["sleepBedtime", "sleepWakeTime", "exerciseTime", "nutritionTime", "sexTime"].forEach((id) => {
+  [
+    "exerciseTime",
+    "nutritionTime",
+    "sexTime",
+    "journalTime"
+  ].forEach((id) => {
     const el = document.getElementById(id);
     if (el && !el.value) el.value = time;
   });
@@ -228,6 +162,7 @@ function bindForms() {
   document.getElementById("exerciseForm").addEventListener("submit", handleExerciseSubmit);
   document.getElementById("nutritionForm").addEventListener("submit", handleNutritionSubmit);
   document.getElementById("sexForm").addEventListener("submit", handleSexSubmit);
+  document.getElementById("journalForm").addEventListener("submit", handleJournalSubmit);
 
   document.querySelectorAll("[data-reset-form]").forEach((btn) => {
     btn.addEventListener("click", () => resetForm(btn.dataset.resetForm));
@@ -240,17 +175,21 @@ function setupAutoSaveDrafts() {
   const fields = document.querySelectorAll("form input, form textarea, form select");
 
   fields.forEach((field) => {
-    const saveFieldDraft = () => {
+    field.addEventListener("input", () => {
       const form = field.closest("form");
       if (!form) return;
       const module = form.id.replace("Form", "");
-      if (!MODULES[module]) return;
       state.drafts[module] = serializeForm(module);
       saveDrafts();
-    };
+    });
 
-    field.addEventListener("input", saveFieldDraft);
-    field.addEventListener("change", saveFieldDraft);
+    field.addEventListener("change", () => {
+      const form = field.closest("form");
+      if (!form) return;
+      const module = form.id.replace("Form", "");
+      state.drafts[module] = serializeForm(module);
+      saveDrafts();
+    });
   });
 }
 
@@ -318,6 +257,12 @@ function formFieldMap() {
       tone: "sexTone",
       satisfaction: "sexSatisfaction",
       notes: "sexNotes"
+    },
+    journal: {
+      id: "journalId",
+      date: "journalDate",
+      time: "journalTime",
+      text: "journalText"
     }
   };
 }
@@ -346,21 +291,18 @@ function fillForm(module, entry, includeId = true) {
 
 function resetForm(module) {
   const form = document.getElementById(`${module}Form`);
-  if (!form) return;
   form.reset();
 
   const idField = document.getElementById(`${module}Id`);
   if (idField) idField.value = "";
 
-  const dateField = document.getElementById(`${module}Date`);
-  const timeField = document.getElementById(`${module}Time`);
-  if (dateField) dateField.value = todayString();
-  if (timeField) timeField.value = currentTime24();
-
   if (module === "sleep") {
     document.getElementById("sleepDate").value = todayString();
-    document.getElementById("sleepBedtime").value = currentTime24();
-    document.getElementById("sleepWakeTime").value = currentTime24();
+  } else {
+    const dateField = document.getElementById(`${module}Date`);
+    const timeField = document.getElementById(`${module}Time`);
+    if (dateField) dateField.value = todayString();
+    if (timeField) timeField.value = currentTime24();
   }
 
   clearDraft(module);
@@ -398,14 +340,9 @@ function handleSleepSubmit(event) {
   event.preventDefault();
   const values = getFormValues("sleep");
 
-  if (
-    !values.date ||
-    !values.bedtime ||
-    !isValidTime(values.bedtime) ||
-    !values.wakeTime ||
-    !isValidTime(values.wakeTime) ||
-    !values.quality
-  ) return;
+  if (!values.date || !values.bedtime || !values.wakeTime || !values.quality) {
+    return;
+  }
 
   upsertEntry("sleep", values);
   resetForm("sleep");
@@ -415,15 +352,9 @@ function handleExerciseSubmit(event) {
   event.preventDefault();
   const values = getFormValues("exercise");
 
-  if (
-    !values.date ||
-    !values.time ||
-    !isValidTime(values.time) ||
-    !values.type ||
-    !values.duration ||
-    !values.intensity ||
-    !values.regulation
-  ) return;
+  if (!values.date || !values.time || !values.type || !values.duration || !values.intensity || !values.regulation) {
+    return;
+  }
 
   upsertEntry("exercise", values);
   resetForm("exercise");
@@ -433,13 +364,9 @@ function handleNutritionSubmit(event) {
   event.preventDefault();
   const values = getFormValues("nutrition");
 
-  if (
-    !values.date ||
-    !values.time ||
-    !isValidTime(values.time) ||
-    !values.title ||
-    !values.mealType
-  ) return;
+  if (!values.date || !values.time || !values.title || !values.mealType) {
+    return;
+  }
 
   upsertEntry("nutrition", values);
   resetForm("nutrition");
@@ -449,32 +376,37 @@ function handleSexSubmit(event) {
   event.preventDefault();
   const values = getFormValues("sex");
 
-  if (
-    !values.date ||
-    !values.time ||
-    !isValidTime(values.time) ||
-    !values.libido ||
-    !values.activityType ||
-    !values.tone ||
-    !values.satisfaction
-  ) return;
+  if (!values.date || !values.time || !values.libido || !values.activityType || !values.tone || !values.satisfaction) {
+    return;
+  }
 
   upsertEntry("sex", values);
   resetForm("sex");
+}
+
+function handleJournalSubmit(event) {
+  event.preventDefault();
+  const values = getFormValues("journal");
+
+  if (!values.date || !values.time || !values.text) {
+    return;
+  }
+
+  upsertEntry("journal", values);
+  resetForm("journal");
 }
 
 function bindGlobalActions() {
   document.getElementById("exportBtn").addEventListener("click", exportData);
   document.getElementById("importFile").addEventListener("change", importData);
   document.getElementById("todayBtn").addEventListener("click", jumpToTodayView);
-  document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 }
 
 function bindQuickFill() {
   document.querySelectorAll("[data-fill-today]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const module = btn.dataset.fillToday;
-      if (!module || !MODULES[module]) return;
+      if (!module) return;
 
       const dateField = document.getElementById(`${module}Date`);
       const timeField = document.getElementById(`${module}Time`);
@@ -495,8 +427,8 @@ function bindFilters() {
     renderAll();
   });
 
-  document.getElementById("filterDate").addEventListener("input", (e) => {
-    state.filters.date = e.target.value.trim();
+  document.getElementById("filterDate").addEventListener("change", (e) => {
+    state.filters.date = e.target.value;
     renderAll();
   });
 
@@ -520,6 +452,7 @@ function renderAll() {
   renderHistory("exercise");
   renderHistory("nutrition");
   renderHistory("sex");
+  renderHistory("journal");
 }
 
 function renderSummary() {
@@ -530,6 +463,7 @@ function renderSummary() {
   const todayExercise = state.data.exercise.filter((e) => e.date === today);
   const todayNutrition = state.data.nutrition.filter((e) => e.date === today);
   const todaySex = state.data.sex.filter((e) => e.date === today);
+  const todayJournal = state.data.journal.filter((e) => e.date === today);
 
   const libidoAvg = todaySex.length
     ? (
@@ -539,10 +473,11 @@ function renderSummary() {
     : "—";
 
   const items = [
-    { label: "Sleep", value: todaySleep.length ? `${todaySleep.length} logged` : "Not yet" },
+    { label: "Sleep", value: todaySleep.length ? "Logged" : "Not yet" },
     { label: "Exercise", value: todayExercise.length ? `${todayExercise.length} logged` : "Not yet" },
     { label: "Nutrition", value: todayNutrition.length ? `${todayNutrition.length} logged` : "Not yet" },
-    { label: "Sex / libido", value: todaySex.length ? `${todaySex.length} logged` : "Not yet" }
+    { label: "Sex / libido", value: todaySex.length ? `${todaySex.length} logged` : "Not yet" },
+    { label: "Journal", value: todayJournal.length ? "Updated" : "Not yet" }
   ];
 
   summaryCards.innerHTML = items
@@ -556,15 +491,14 @@ function renderSummary() {
     )
     .join("");
 
-  document.getElementById("todaySleepCount").textContent = String(todaySleep.length);
   document.getElementById("todayExerciseCount").textContent = String(todayExercise.length);
   document.getElementById("todayNutritionCount").textContent = String(todayNutrition.length);
+  document.getElementById("todayJournalCount").textContent = String(todayJournal.length);
   document.getElementById("todayLibidoAvg").textContent = libidoAvg;
 }
 
 function renderHistory(module) {
   const container = document.getElementById(`${module}History`);
-  if (!container) return;
   const entries = getFilteredEntries(module);
 
   if (!entries.length) {
@@ -599,7 +533,9 @@ function getFilteredEntries(module) {
 
   const { module: filterModule, date, text } = state.filters;
 
-  if (filterModule !== "all" && filterModule !== module) return [];
+  if (filterModule !== "all" && filterModule !== module) {
+    return [];
+  }
 
   if (date) {
     entries = entries.filter((entry) => entry.date === date);
@@ -675,6 +611,8 @@ function primaryMeta(module, entry) {
       return `${entry.date} • ${entry.time} • ${entry.title}`;
     case "sex":
       return `${entry.date} • ${entry.time} • ${entry.activityType}`;
+    case "journal":
+      return `${entry.date} • ${entry.time}`;
     default:
       return entry.date || "";
   }
@@ -712,6 +650,11 @@ function entryRows(module, entry) {
         ["Emotional tone", entry.tone],
         ["Satisfaction", entry.satisfaction],
         ["Notes", entry.notes]
+      ]);
+
+    case "journal":
+      return compactRows([
+        ["Journal", entry.text]
       ]);
 
     default:
@@ -782,10 +725,17 @@ function importData(event) {
     try {
       const parsed = JSON.parse(reader.result);
       const imported = parsed.data || parsed;
-      const merged = sanitizeImportedData(imported);
+
+      const merged = {
+        sleep: Array.isArray(imported.sleep) ? imported.sleep : [],
+        exercise: Array.isArray(imported.exercise) ? imported.exercise : [],
+        nutrition: Array.isArray(imported.nutrition) ? imported.nutrition : [],
+        sex: Array.isArray(imported.sex) ? imported.sex : [],
+        journal: Array.isArray(imported.journal) ? imported.journal : []
+      };
 
       const confirmed = window.confirm(
-        "Import data and replace current local Life Vitals data? Journal data in older exports will be ignored."
+        "Import data and replace current local Life Vitals data?"
       );
       if (!confirmed) return;
 
