@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindGlobalActions();
   bindFilters();
   bindQuickFill();
+  bindTimeFormatting();
   renderAll();
   restoreDrafts();
   registerServiceWorker();
@@ -129,6 +130,52 @@ function todayString() {
 function currentTime24() {
   const now = new Date();
   return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+
+function formatTimeInput(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+
+  if (digits.length === 0) return "";
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function normalizeTime(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return formatTimeInput(digits);
+
+  let hours = parseInt(digits.slice(0, 2), 10);
+  let minutes = parseInt(digits.slice(2, 4), 10);
+
+  if (Number.isNaN(hours)) hours = 0;
+  if (Number.isNaN(minutes)) minutes = 0;
+
+  hours = Math.max(0, Math.min(23, hours));
+  minutes = Math.max(0, Math.min(59, minutes));
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function isValidTime(value) {
+  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
+}
+
+function bindTimeFormatting() {
+  ["sleepBedtime", "sleepWakeTime", "exerciseTime", "nutritionTime", "sexTime"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("input", () => {
+      el.value = formatTimeInput(el.value);
+    });
+
+    el.addEventListener("blur", () => {
+      el.value = normalizeTime(el.value);
+    });
+  });
 }
 
 function pad(value) {
@@ -351,7 +398,14 @@ function handleSleepSubmit(event) {
   event.preventDefault();
   const values = getFormValues("sleep");
 
-  if (!values.date || !values.bedtime || !values.wakeTime || !values.quality) return;
+  if (
+    !values.date ||
+    !values.bedtime ||
+    !isValidTime(values.bedtime) ||
+    !values.wakeTime ||
+    !isValidTime(values.wakeTime) ||
+    !values.quality
+  ) return;
 
   upsertEntry("sleep", values);
   resetForm("sleep");
@@ -361,7 +415,15 @@ function handleExerciseSubmit(event) {
   event.preventDefault();
   const values = getFormValues("exercise");
 
-  if (!values.date || !values.time || !values.type || !values.duration || !values.intensity || !values.regulation) return;
+  if (
+    !values.date ||
+    !values.time ||
+    !isValidTime(values.time) ||
+    !values.type ||
+    !values.duration ||
+    !values.intensity ||
+    !values.regulation
+  ) return;
 
   upsertEntry("exercise", values);
   resetForm("exercise");
@@ -371,7 +433,13 @@ function handleNutritionSubmit(event) {
   event.preventDefault();
   const values = getFormValues("nutrition");
 
-  if (!values.date || !values.time || !values.title || !values.mealType) return;
+  if (
+    !values.date ||
+    !values.time ||
+    !isValidTime(values.time) ||
+    !values.title ||
+    !values.mealType
+  ) return;
 
   upsertEntry("nutrition", values);
   resetForm("nutrition");
@@ -381,7 +449,15 @@ function handleSexSubmit(event) {
   event.preventDefault();
   const values = getFormValues("sex");
 
-  if (!values.date || !values.time || !values.libido || !values.activityType || !values.tone || !values.satisfaction) return;
+  if (
+    !values.date ||
+    !values.time ||
+    !isValidTime(values.time) ||
+    !values.libido ||
+    !values.activityType ||
+    !values.tone ||
+    !values.satisfaction
+  ) return;
 
   upsertEntry("sex", values);
   resetForm("sex");
