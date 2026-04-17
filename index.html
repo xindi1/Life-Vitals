@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1720" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Life Vitals" />
+  <title>Life Vitals</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="title-wrap">
+        <p class="eyebrow">Daily Operating System</p>
+        <h1>Life Vitals</h1>
+        <p class="subtitle">Vitals, activity, and narrative in one mobile-first daily shell.</p>
+      </div>
+
+      <div class="header-actions">
+        <button id="todayBtn" class="ghost-btn" type="button">Today</button>
+        <button id="themeToggle" class="ghost-btn" type="button">Theme</button>
+        <button id="exportBtn" class="ghost-btn" type="button">Export</button>
+        <label class="ghost-btn import-label" for="importFile">Import</label>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+
+      <div class="date-bar card">
+        <div>
+          <span class="meta-label">Current date</span>
+          <div id="currentDate" class="date-value"></div>
+        </div>
+        <div class="install-wrap">
+          <button id="installBtn" class="primary-btn hidden" type="button">Install App</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="card dashboard-card">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Dashboard</p>
+            <h2>Today at a glance</h2>
+          </div>
+        </div>
+
+        <div id="summaryCards" class="summary-grid"></div>
+
+        <div class="today-strip today-strip-wide">
+          <div class="strip-item">
+            <span class="strip-label">Vitals entries</span>
+            <strong id="todayVitalsCount">0</strong>
+          </div>
+          <div class="strip-item">
+            <span class="strip-label">Activity entries</span>
+            <strong id="todayActivityCount">0</strong>
+          </div>
+          <button id="timelineTrigger" class="strip-item strip-button" type="button">
+            <span class="strip-label">Total entries</span>
+            <strong id="todayTotalCount">0</strong>
+          </button>
+          <div class="strip-item">
+            <span class="strip-label">Narrative entries</span>
+            <strong id="todayNarrativeCount">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card filter-card">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Filter</p>
+            <h2>Search history</h2>
+          </div>
+        </div>
+
+        <div class="filter-grid filter-grid-2row">
+          <div class="field">
+            <label for="filterZone">Zone</label>
+            <select id="filterZone">
+              <option value="all">All zones</option>
+              <option value="vitals">Vitals</option>
+              <option value="activity">Activity</option>
+              <option value="narrative">Narrative</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filterModule">Module</label>
+            <select id="filterModule">
+              <option value="all">All modules</option>
+              <option value="sleep">Sleep</option>
+              <option value="exercise">Exercise</option>
+              <option value="nutrition">Nutrition</option>
+              <option value="sex">Sex</option>
+              <option value="work">Work</option>
+              <option value="build">Build</option>
+              <option value="events">Events</option>
+              <option value="admin">Admin</option>
+              <option value="write">Write</option>
+            </select>
+          </div>
+
+          <div class="field field-date-mobile">
+            <label for="filterDate">Date</label>
+            <div class="date-wrap">
+              <input id="filterDate" type="text" placeholder="YYYY-MM-DD" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="field field-wide">
+            <label for="filterText">Text search</label>
+            <input id="filterText" type="text" placeholder="Search notes, outputs, reflections, tags..." />
+          </div>
+
+          <div class="field actions-inline field-full">
+            <button id="clearFiltersBtn" class="ghost-btn full-btn" type="button">Clear Filters</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card zone-card">
+        <div class="section-head compact-head">
+          <div>
+            <p class="section-kicker">Zone 1</p>
+            <h2>Vitals</h2>
+          </div>
+        </div>
+        <nav class="tab-nav" aria-label="Life Vitals modules">
+          <button class="tab-btn active" data-tab="sleep" type="button">Sleep</button>
+          <button class="tab-btn" data-tab="exercise" type="button">Exercise</button>
+          <button class="tab-btn" data-tab="nutrition" type="button">Nutrition</button>
+          <button class="tab-btn" data-tab="sex" type="button">Sex</button>
+        </nav>
+      </section>
+
+      <section id="sleepTab" class="tab-panel active">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 1</p><h2>Sleep</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="sleep">Today</button>
+            </div>
+            <form id="sleepForm">
+              <input type="hidden" id="sleepId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="sleepDate">Date</label><div class="date-wrap"><input id="sleepDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="sleepBedtime">Bedtime</label><div class="date-wrap"><input id="sleepBedtime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field field-time-mobile"><label for="sleepWakeTime">Wake time</label><div class="date-wrap"><input id="sleepWakeTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="sleepHours">Estimated total sleep hours</label><input id="sleepHours" type="number" min="0" max="24" step="0.1" placeholder="6.5" /></div>
+                <div class="field"><label for="sleepQuality">Sleep quality (1–5)</label><select id="sleepQuality" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field field-full"><label for="sleepDreams">Dreams</label><input id="sleepDreams" type="text" placeholder="Optional short note" /></div>
+                <div class="field field-full"><label for="sleepNotes">Sleep notes</label><textarea id="sleepNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Sleep Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="sleep">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past sleep entries</h2></div></div><div id="sleepHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="exerciseTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 2</p><h2>Exercise</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="exercise">Today</button>
+            </div>
+            <form id="exerciseForm">
+              <input type="hidden" id="exerciseId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="exerciseDate">Date</label><div class="date-wrap"><input id="exerciseDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="exerciseTime">Time</label><div class="date-wrap"><input id="exerciseTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="exerciseType">Exercise type</label><select id="exerciseType" required><option value="">Select</option><option>Swimming</option><option>Resistance Training</option><option>Walking</option><option>Stretching / Mobility</option><option>Balance Work</option><option>Manual Labor</option><option>Cardio</option><option>Other</option></select></div>
+                <div class="field"><label for="exerciseDuration">Duration (minutes)</label><input id="exerciseDuration" type="number" min="0" max="1440" step="1" required /></div>
+                <div class="field"><label for="exerciseIntensity">Intensity (1–5)</label><select id="exerciseIntensity" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field"><label for="exerciseRegulation">Regulation effect</label><select id="exerciseRegulation" required><option value="">Select</option><option>Draining</option><option>Neutral</option><option>Regulating</option><option>Energizing</option><option>Life-Affirming</option></select></div>
+                <div class="field field-full"><label for="exerciseNotes">Notes</label><textarea id="exerciseNotes" rows="4" placeholder="Training notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Exercise Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="exercise">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past exercise entries</h2></div></div><div id="exerciseHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="nutritionTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 3</p><h2>Nutrition</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="nutrition">Today</button>
+            </div>
+            <form id="nutritionForm">
+              <input type="hidden" id="nutritionId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="nutritionDate">Date</label><div class="date-wrap"><input id="nutritionDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="nutritionTime">Time</label><div class="date-wrap"><input id="nutritionTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="nutritionTitle">Title</label><input id="nutritionTitle" type="text" placeholder="Oatmeal, lunch, snack..." required /></div>
+                <div class="field"><label for="nutritionMealType">Meal type</label><select id="nutritionMealType" required><option value="">Select</option><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option><option>Drink</option><option>Other</option></select></div>
+                <div class="field"><label for="nutritionHydration">Hydration</label><input id="nutritionHydration" type="text" placeholder="Water, matcha, coffee..." /></div>
+                <div class="field"><label for="nutritionCravings">Cravings</label><input id="nutritionCravings" type="text" placeholder="Optional" /></div>
+                <div class="field field-full"><label for="nutritionNotes">Notes</label><textarea id="nutritionNotes" rows="4" placeholder="Meal notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Nutrition Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="nutrition">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past nutrition entries</h2></div></div><div id="nutritionHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="sexTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 4</p><h2>Sex</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="sex">Today</button>
+            </div>
+            <form id="sexForm">
+              <input type="hidden" id="sexId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="sexDate">Date</label><div class="date-wrap"><input id="sexDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="sexTime">Time</label><div class="date-wrap"><input id="sexTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="sexLibido">Libido (1–5)</label><select id="sexLibido" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field"><label for="sexActivityType">Activity type</label><input id="sexActivityType" type="text" placeholder="Solo, partnered, none..." required /></div>
+                <div class="field"><label for="sexTone">Tone</label><input id="sexTone" type="text" placeholder="Connected, frustrated, neutral..." required /></div>
+                <div class="field"><label for="sexSatisfaction">Satisfaction (1–5)</label><select id="sexSatisfaction" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field field-full"><label for="sexNotes">Notes</label><textarea id="sexNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Sex Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="sex">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past sex entries</h2></div></div><div id="sexHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section class="card zone-card">
+        <div class="section-head compact-head">
+          <div>
+            <p class="section-kicker">Zone 2</p>
+            <h2>Activity Stream</h2>
+          </div>
+        </div>
+        <nav class="tab-nav activity-nav" aria-label="Activity Stream modules">
+          <button class="tab-btn" data-tab="work" type="button">Work</button>
+          <button class="tab-btn" data-tab="build" type="button">Build</button>
+          <button class="tab-btn" data-tab="events" type="button">Events</button>
+          <button class="tab-btn" data-tab="admin" type="button">Admin</button>
+        </nav>
+      </section>
+
+      <section id="workTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 5</p><h2>Work</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="work">Today</button>
+            </div>
+            <form id="workForm">
+              <input type="hidden" id="workId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="workDate">Date</label><div class="date-wrap"><input id="workDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="workTime">Time</label><div class="date-wrap"><input id="workTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="workType">Activity type</label><select id="workType" required><option value="">Select</option><option>Meeting</option><option>Deep Work</option><option>Comms</option><option>Strategy</option><option>Presentation</option><option>Analysis</option><option>Admin</option><option>Other</option></select></div>
+                <div class="field"><label for="workDuration">Duration (minutes)</label><input id="workDuration" type="number" min="0" max="1440" step="1" required /></div>
+                <div class="field field-full"><label for="workOutput">Output</label><input id="workOutput" type="text" placeholder="What actually moved forward?" required /></div>
+                <div class="field"><label for="workFriction">Friction (1–5)</label><select id="workFriction" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field field-full"><label for="workNotes">Notes</label><textarea id="workNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Work Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="work">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past work entries</h2></div></div><div id="workHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="buildTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 6</p><h2>Build</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="build">Today</button>
+            </div>
+            <form id="buildForm">
+              <input type="hidden" id="buildId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="buildDate">Date</label><div class="date-wrap"><input id="buildDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="buildTime">Time</label><div class="date-wrap"><input id="buildTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="buildProject">Project</label><input id="buildProject" type="text" placeholder="Deal OS, Signal Kit..." required /></div>
+                <div class="field"><label for="buildStage">Stage</label><select id="buildStage" required><option value="">Select</option><option>Exploration</option><option>Build</option><option>Outreach</option><option>Validation</option><option>Close</option><option>Other</option></select></div>
+                <div class="field field-full"><label for="buildAction">Action taken</label><input id="buildAction" type="text" placeholder="What did you do?" required /></div>
+                <div class="field"><label for="buildMomentum">Momentum impact</label><select id="buildMomentum" required><option value="">Select</option><option value="-2">-2</option><option value="-1">-1</option><option value="0">0</option><option value="1">+1</option><option value="2">+2</option></select></div>
+                <div class="field field-full"><label for="buildNotes">Notes</label><textarea id="buildNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Build Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="build">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past build entries</h2></div></div><div id="buildHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="eventsTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 7</p><h2>Events</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="events">Today</button>
+            </div>
+            <form id="eventsForm">
+              <input type="hidden" id="eventsId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="eventsDate">Date</label><div class="date-wrap"><input id="eventsDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="eventsTime">Time</label><div class="date-wrap"><input id="eventsTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="eventsType">Event type</label><select id="eventsType" required><option value="">Select</option><option>Social</option><option>Family</option><option>Travel</option><option>Professional</option><option>Recreation</option><option>Other</option></select></div>
+                <div class="field"><label for="eventsEnergyBefore">Energy before (1–5)</label><select id="eventsEnergyBefore" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field"><label for="eventsEnergyAfter">Energy after (1–5)</label><select id="eventsEnergyAfter" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field field-full"><label for="eventsMoment">Notable moment</label><input id="eventsMoment" type="text" placeholder="What stood out?" required /></div>
+                <div class="field field-full"><label for="eventsNotes">Notes</label><textarea id="eventsNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Event Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="events">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past event entries</h2></div></div><div id="eventsHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="adminTab" class="tab-panel">
+        <div class="module-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 8</p><h2>Admin</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="admin">Today</button>
+            </div>
+            <form id="adminForm">
+              <input type="hidden" id="adminId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="adminDate">Date</label><div class="date-wrap"><input id="adminDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="adminTime">Time</label><div class="date-wrap"><input id="adminTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field field-full"><label for="adminTask">Task</label><input id="adminTask" type="text" placeholder="Groceries, scheduling, household logistics..." required /></div>
+                <div class="field"><label for="adminDuration">Duration (minutes)</label><input id="adminDuration" type="number" min="0" max="1440" step="1" required /></div>
+                <div class="field"><label for="adminLoad">Cognitive load (1–5)</label><select id="adminLoad" required><option value="">Select</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                <div class="field"><label for="adminCompleted">Completed?</label><select id="adminCompleted" required><option value="">Select</option><option>Yes</option><option>No</option><option>Partial</option></select></div>
+                <div class="field field-full"><label for="adminNotes">Notes</label><textarea id="adminNotes" rows="4" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Admin Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="admin">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Past admin entries</h2></div></div><div id="adminHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section class="card zone-card">
+        <div class="section-head compact-head">
+          <div>
+            <p class="section-kicker">Zone 3</p>
+            <h2>Narrative</h2>
+          </div>
+        </div>
+        <nav class="tab-nav narrative-nav" aria-label="Narrative modules">
+          <button class="tab-btn" data-tab="write" type="button">Write</button>
+          <button class="tab-btn" data-tab="entries" type="button">Entries</button>
+        </nav>
+      </section>
+
+      <section id="writeTab" class="tab-panel">
+        <div class="module-grid narrative-grid">
+          <article class="card form-card">
+            <div class="section-head">
+              <div><p class="section-kicker">Module 9</p><h2>Write</h2></div>
+              <button class="ghost-btn quick-fill-btn" type="button" data-fill-today="write">Today</button>
+            </div>
+            <form id="writeForm">
+              <input type="hidden" id="writeId" />
+              <div class="form-grid">
+                <div class="field field-date-mobile"><label for="writeDate">Date</label><div class="date-wrap"><input id="writeDate" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" required /></div></div>
+                <div class="field field-time-mobile"><label for="writeTime">Time</label><div class="date-wrap"><input id="writeTime" type="text" inputmode="numeric" placeholder="HH:MM" required /></div></div>
+                <div class="field"><label for="writeType">Type</label><select id="writeType" required><option value="">Select</option><option>Reflection</option><option>Observation</option><option>Journal</option><option>Idea</option><option>Other</option></select></div>
+                <div class="field field-full"><label for="writeTitle">Title</label><input id="writeTitle" type="text" placeholder="Optional title" /></div>
+                <div class="field field-full"><label for="writeBody">Entry</label><textarea id="writeBody" rows="10" placeholder="Write here..." required></textarea></div>
+                <div class="field field-full"><label for="writeTags">Tags</label><input id="writeTags" type="text" placeholder="Comma-separated tags" /></div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-btn" type="submit">Save Narrative Entry</button>
+                <button class="ghost-btn" type="button" data-reset-form="write">Clear</button>
+              </div>
+            </form>
+          </article>
+          <article class="card history-card"><div class="section-head"><div><p class="section-kicker">History</p><h2>Recent narrative entries</h2></div></div><div id="writeHistory" class="history-list"></div></article>
+        </div>
+      </section>
+
+      <section id="entriesTab" class="tab-panel">
+        <div class="module-grid narrative-grid">
+          <article class="card history-card full-width-card">
+            <div class="section-head"><div><p class="section-kicker">Entries</p><h2>All narrative entries</h2></div></div>
+            <div id="entriesHistory" class="history-list"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="timelineModal" class="timeline-modal hidden" aria-hidden="true">
+    <div class="timeline-backdrop" data-close-timeline="true"></div>
+    <div class="timeline-panel card" role="dialog" aria-modal="true" aria-labelledby="timelineTitle">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Timeline</p>
+          <h2 id="timelineTitle">Today timeline</h2>
+        </div>
+        <button id="closeTimelineBtn" class="ghost-btn" type="button">Close</button>
+      </div>
+      <div id="timelineSummary" class="timeline-summary"></div>
+      <div id="timelineList" class="timeline-list"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
