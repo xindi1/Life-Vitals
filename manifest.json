@@ -1,7 +1,7 @@
 {
-  "name": "Life Vitals",
+  "name": "Life Vitals vNext",
   "short_name": "Life Vitals",
-  "description": "Vitals, activity, and narrative in one daily shell.",
+  "description": "Vitals, activity, and narrative continuity in one daily shell.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1118",
